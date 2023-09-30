@@ -1,0 +1,3 @@
+Line 1 - Tomorrow's weather will be amazing!..
+Line 2  I love coding ...
+Line 3 - Nodejs is pretty interesting

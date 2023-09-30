@@ -1,5 +1,5 @@
 const http = require("http");
-var StringDecoder = require("string_decoder").StringDecoder;
+const StringDecoder = require("string_decoder").StringDecoder;
 
 const getBody = (req, callback) => {
   const decode = new StringDecoder("utf-8");
@@ -20,22 +20,23 @@ const getBody = (req, callback) => {
   });
 };
 
-// here, you could declare one or more variables to store what comes back from the form.
-let item = "Enter something below.";
+// Variables for the number guessing game
+const randomNumber = Math.floor(Math.random() * 100) + 1;
+let guessMessage = "Take a guess (1-100):";
 
-// here, you can change the form below to modify the input fields and what is displayed.
-// This is just ordinary html with string interpolation.
 const form = () => {
   return `
-  <body>
-  <p>${item}</p>
-  <form method="POST">
-  <input name="item"></input>
-  <button type="submit">Submit</button>
+  <body style="font-family: Arial, sans-serif; background-color: #f0f0f0;">
+  <p style="color: blue; font-size: 18px;">${guessMessage}</p>
+  <form method="POST" style="margin-top: 20px;">
+    <input name="guess" type="number" min="1" max="100" style="color: green; padding: 5px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;">
+    <button type="submit" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer;">Submit</button>
   </form>
   </body>
   `;
 };
+
+
 
 const server = http.createServer((req, res) => {
   console.log("req.method is ", req.method);
@@ -43,13 +44,21 @@ const server = http.createServer((req, res) => {
   if (req.method === "POST") {
     getBody(req, (body) => {
       console.log("The body of the post is ", body);
-      // here, you can add your own logic
-      if (body["item"]) {
-        item = body["item"];
+
+      if (body["guess"]) {
+        const userGuess = parseInt(body["guess"], 10);
+
+        if (userGuess === randomNumber) {
+          guessMessage = "Congratulations! You guessed the correct number.";
+        } else if (userGuess < randomNumber) {
+          guessMessage = "Too low. Try again!";
+        } else {
+          guessMessage = "Too high. Try again!";
+        }
       } else {
-        item = "Nothing was entered.";
+        guessMessage = "Please enter a valid guess.";
       }
-      // Your code changes would end here
+
       res.writeHead(303, {
         Location: "/",
       });
