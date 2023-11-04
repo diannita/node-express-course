@@ -9,14 +9,14 @@ require('dotenv').config();
 app.use(express.json());
 
 // Routes
-app.use('/ejemplo', ejemploRoutes);
+app.use('/api', ejemploRoutes);
 
 // Iniciar el servidor
 const port = process.env.PORT;
 
 const start = async () => {
     try {
-      await connectDB(process.env.MONGO_URI);
+      await connectDB(process.env.MONGODB_URI);
       app.listen(port, () =>
         console.log(`Server is listening on port ${port}...`)
       );

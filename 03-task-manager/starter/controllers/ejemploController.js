@@ -7,6 +7,7 @@ exports.createEjemplo = async (req, res) => {
     const resultado = await ejemplo.save();
     res.json(resultado);
   } catch (error) {
+    console.log(error);
     res.status(500).send(error);
   }
 };
@@ -18,6 +19,7 @@ exports.getLastNames = async (req, res) => {
     const lastNames = ejemplos.map((e) => e.nombre.split(' ').pop());
     res.json(lastNames);
   } catch (error) {
+    console.log(error);
     res.status(500).send(error);
   }
 };
