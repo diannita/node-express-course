@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const cookieParser = require('cookie-parser'); // Import the cookie-parser package
 
 const { products, people } = require('./data');
 
@@ -12,6 +13,17 @@ function logger(req, res, next) {
 app.use(express.static('./public'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(cookieParser()); // Parse cookies
+
+// Middleware function for authentication
+function auth(req, res, next) {
+  if (req.cookies.name) {
+    req.user = req.cookies.name;
+    next();
+  } else {
+    res.status(401).json({ message: 'Unauthorized' });
+  }
+}
 
 // Apply the logger middleware for all routes
 app.use(logger);
@@ -65,6 +77,28 @@ app.post('/api/v1/people', (req, res) => {
   const newPerson = { id: people.length + 1, name: req.body.name };
   people.push(newPerson);
   res.status(201).json({ success: true, name: req.body.name });
+});
+
+
+// Logon route to set a cookie
+app.post('/logon', (req, res) => {
+  if (req.body.name) {
+    res.cookie('name', req.body.name);
+    res.status(201).json({ message: `Hello, ${req.body.name}!` });
+  } else {
+    res.status(400).json({ message: 'Please provide a name in the body' });
+  }
+});
+
+// Logoff route to clear the cookie
+app.delete('/logoff', (req, res) => {
+  res.clearCookie('name');
+  res.status(200).json({ message: 'User is logged off' });
+});
+
+// Test route with auth middleware
+app.get('/test', auth, (req, res) => {
+  res.status(200).json({ message: `Welcome to the user, ${req.user}` });
 });
 
 const port = 4000;
