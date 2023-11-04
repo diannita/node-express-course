@@ -1,70 +1,107 @@
-//Require express
-const express = require('express')
-// passing express to app variable
-const app = express()
+const express = require('express');
+const app = express();
+const cookieParser = require('cookie-parser'); // Import the cookie-parser package
 
-//require file
-const { products } = require("./data");
+const { products, people } = require('./data');
 
-//Calling public path
-app.use(express.static("./public"))
+// Middleware function to log requests
+function logger(req, res, next) {
+  console.log(`Method: ${req.method}, URL: ${req.url}, Time: ${new Date()}`);
+  next();
+}
 
-//Api routes
-//Test API
-app.get('/api/v1/test', (req, res) => {
-    res.json({ message: "It worked!" });
-} )
-//Array API
+app.use(express.static('./public'));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(cookieParser()); // Parse cookies
+
+// Middleware function for authentication
+function auth(req, res, next) {
+  if (req.cookies.name) {
+    req.user = req.cookies.name;
+    next();
+  } else {
+    res.status(401).json({ message: 'Unauthorized' });
+  }
+}
+
+// Apply the logger middleware for all routes
+app.use(logger);
+
+// API routes for products
 app.get('/api/v1/products', (req, res) => {
-    res.json(products);
-})
+  res.json(products);
+});
 
-//Get product by ID
 app.get('/api/v1/products/:productID', (req, res) => {
-    // Retrieve the productID from req.params
   const productID = req.params.productID;
-
-  // Find the product with the specified ID in the products array
   const product = products.find((product) => product.id === parseInt(productID));
 
   if (product) {
-    // If the product with the given ID is found, return it as JSON
     res.json(product);
   } else {
-    // If the product is not found, return a 404 (Not Found) status and a message
     res.status(404).json({ message: 'That product was not found.' });
   }
-})
+});
 
-// Define a route to handle query parameters
 app.get('/api/v1/query', (req, res) => {
-    const { search, limit, maxPrice } = req.query;
-  
-    // Filter products based on the 'search' parameter (using regular expressions)
-    let filteredProducts = products;
-    if (search) {
-      const regex = new RegExp(search, 'i'); // 'i' for case-insensitive matching
-      filteredProducts = products.filter((product) => regex.test(product.name));
-    }
-  
-    // Filter products based on the 'maxPrice' parameter
-    if (maxPrice) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.price <= parseFloat(maxPrice)
-      );
-    }
-  
-    // Limit the results based on the 'limit' parameter
-    if (limit) {
-      filteredProducts = filteredProducts.slice(0, parseInt(limit));
-    }
-  
-    // Send the filtered products as JSON response
-    res.json(filteredProducts);
-  });
+  const { search, limit, maxPrice } = req.query;
+  let filteredProducts = products;
 
-//Port connection 
+  if (search) {
+    const regex = new RegExp(search, 'i');
+    filteredProducts = products.filter((product) => regex.test(product.name));
+  }
+
+  if (maxPrice) {
+    filteredProducts = filteredProducts.filter((product) => product.price <= parseFloat(maxPrice));
+  }
+
+  if (limit) {
+    filteredProducts = filteredProducts.slice(0, parseInt(limit));
+  }
+
+  res.json(filteredProducts);
+});
+
+// API routes for people
+app.get('/api/v1/people', (req, res) => {
+  res.json(people);
+});
+
+app.post('/api/v1/people', (req, res) => {
+  if (!req.body.name) {
+    return res.status(400).json({ success: false, message: 'Please provide a name' });
+  }
+
+  const newPerson = { id: people.length + 1, name: req.body.name };
+  people.push(newPerson);
+  res.status(201).json({ success: true, name: req.body.name });
+});
+
+
+// Logon route to set a cookie
+app.post('/logon', (req, res) => {
+  if (req.body.name) {
+    res.cookie('name', req.body.name);
+    res.status(201).json({ message: `Hello, ${req.body.name}!` });
+  } else {
+    res.status(400).json({ message: 'Please provide a name in the body' });
+  }
+});
+
+// Logoff route to clear the cookie
+app.delete('/logoff', (req, res) => {
+  res.clearCookie('name');
+  res.status(200).json({ message: 'User is logged off' });
+});
+
+// Test route with auth middleware
+app.get('/test', auth, (req, res) => {
+  res.status(200).json({ message: `Welcome to the user, ${req.user}` });
+});
+
 const port = 4000;
 app.listen(port, () => {
-    console.log(`Server is running by port ${port} `);
-})
+  console.log(`Server is running by port ${port}`);
+});
