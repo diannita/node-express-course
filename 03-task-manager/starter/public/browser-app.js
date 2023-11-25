@@ -8,34 +8,32 @@ const showTasks = async () => {
   loadingDOM.style.visibility = 'visible'
   try {
     const {
-      data: { tasks },
-    } = await axios.get('/api/v1/tasks')
+      data: { nombre },
+    } = await axios.get('/api/v1/get-all/names')
     if (tasks.length < 1) {
       tasksDOM.innerHTML = '<h5 class="empty-list">No tasks in your list</h5>'
       loadingDOM.style.visibility = 'hidden'
       return
     }
-    const allTasks = tasks
-      .map((task) => {
-        const { completed, _id: taskID, name } = task
-        return `<div class="single-task ${completed && 'task-completed'}">
-<h5><span><i class="far fa-check-circle"></i></span>${name}</h5>
-<div class="task-links">
+    const allTasks = nombre
+      .map((name) => {
+        const { _id: nombreID, nombre } = name
+        return `
+        <div class="single-task">
+          <h5><span><i class="far fa-check-circle"></i></span>${name}</h5>
+        
+          <div class="task-links">
+            <a href="task.html?id=${nombreID}"  class="edit-link">
+              <i class="fas fa-edit"></i>
+            </a>
 
-
-
-<!-- edit link -->
-<a href="task.html?id=${taskID}"  class="edit-link">
-<i class="fas fa-edit"></i>
-</a>
-<!-- delete btn -->
-<button type="button" class="delete-btn" data-id="${taskID}">
-<i class="fas fa-trash"></i>
-</button>
-</div>
-</div>`
+            <button type="button" class="delete-btn" data-id="${nombreID}">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>`;
       })
-      .join('')
+      .join('');
     tasksDOM.innerHTML = allTasks
   } catch (error) {
     tasksDOM.innerHTML =
@@ -54,7 +52,7 @@ tasksDOM.addEventListener('click', async (e) => {
     loadingDOM.style.visibility = 'visible'
     const id = el.parentElement.dataset.id
     try {
-      await axios.delete(`/api/v1/tasks/${id}`)
+      await axios.delete(`/api/v1/delete/name/${id}`)
       showTasks()
     } catch (error) {
       console.log(error)
@@ -70,7 +68,7 @@ formDOM.addEventListener('submit', async (e) => {
   const name = taskInputDOM.value
 
   try {
-    await axios.post('/api/v1/tasks', { name })
+    await axios.post('/api/v1/create/name', { nombre: name })
     showTasks()
     taskInputDOM.value = ''
     formAlertDOM.style.display = 'block'
